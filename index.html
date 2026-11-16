@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FiscalHub — Monitor Fiscal Inteligente (protótipo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --ink:#101A2E; --muted:#5B677D; --line:#D9DFE8;
+  --side:#0F1E3A; --side-ink:#DCE4F2; --side-muted:#8D9BB5; --side-active:#1D3563;
+  --primary:#1B4DB3; --primary-ink:#FFFFFF;
+  --ok:#0F7A57; --ok-bg:#DDF3EA; --warn:#8F5A00; --warn-bg:#FBEFCF; --risk:#B42318; --risk-bg:#FBE1DE;
+  --font-head:'Bricolage Grotesque','Segoe UI',system-ui,-apple-system,sans-serif;
+  --font-body:'Instrument Sans','Segoe UI',system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1120; --surface:#121B2D; --ink:#E7ECF5; --muted:#9AA7BD; --line:#25314A;
+    --side:#070D1A; --side-ink:#D5DDEC; --side-muted:#7F8DA8; --side-active:#1A2A4D;
+    --primary:#5B8CFF; --primary-ink:#0A1120;
+    --ok:#4ADE9F; --ok-bg:#12372B; --warn:#F2B84B; --warn-bg:#3A2C0C; --risk:#FF8A7E; --risk-bg:#40171A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1120; --surface:#121B2D; --ink:#E7ECF5; --muted:#9AA7BD; --line:#25314A;
+  --side:#070D1A; --side-ink:#D5DDEC; --side-muted:#7F8DA8; --side-active:#1A2A4D;
+  --primary:#5B8CFF; --primary-ink:#0A1120;
+  --ok:#4ADE9F; --ok-bg:#12372B; --warn:#F2B84B; --warn-bg:#3A2C0C; --risk:#FF8A7E; --risk-bg:#40171A;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.15;letter-spacing:-.01em}
+h1{font-size:1.9rem;font-weight:700}
+h2{font-size:1.15rem;font-weight:700}
+p{margin:0}
+a{color:var(--primary)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-radius:6px}
+
+/* layout */
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--side);color:var(--side-ink);padding:22px 14px;display:flex;flex-direction:column;gap:22px}
+.logo{font-family:var(--font-head);font-weight:700;font-size:1.35rem;color:#fff;padding:0 10px;letter-spacing:-.02em}
+.logo small{display:block;font-family:var(--font-body);font-weight:400;font-size:.76rem;color:var(--side-muted);letter-spacing:0;margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;justify-content:space-between;color:var(--side-ink);text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:500}
+.nav a:hover{background:var(--side-active)}
+.nav a[aria-current="page"]{background:var(--side-active);color:#fff;box-shadow:inset 3px 0 0 #7FA6FF}
+.badge{background:var(--risk);color:#fff;border-radius:99px;font-size:.74rem;font-weight:600;padding:1px 8px;min-width:22px;text-align:center}
+.side-foot{margin-top:auto;font-size:.8rem;color:var(--side-muted);padding:0 10px;display:flex;flex-direction:column;gap:10px}
+.side-foot button{background:none;border:1px solid #2B3D63;color:var(--side-ink);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left}
+.main{padding:24px 32px 56px;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+.who{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--primary);color:var(--primary-ink);display:grid;place-items:center;font-weight:600}
+.empresa{display:flex;align-items:center;gap:8px}
+.empresa label{color:var(--muted);font-size:.85rem}
+select,.input{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:40px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.page-head p{color:var(--muted);margin-top:6px;max-width:62ch}
+
+/* components */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.detail{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:9px 14px;min-height:40px;cursor:pointer;font-weight:600;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.6;cursor:progress}
+.btn.sm{min-height:34px;padding:5px 10px;font-size:.88rem}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 10px;font-size:.82rem;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.quitada{background:var(--ok-bg);color:var(--ok)}
+.pill.pendente{background:var(--warn-bg);color:var(--warn)}
+.pill.risco{background:var(--risk-bg);color:var(--risk)}
+.kpi{text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:4px;width:100%}
+.kpi:hover{border-color:var(--muted)}
+.kpi .n{font-family:var(--font-head);font-size:2rem;font-weight:700;line-height:1}
+.kpi .l{color:var(--muted);font-size:.88rem}
+.kpi .v{font-size:.85rem;color:var(--muted)}
+.kpi.quitada .n{color:var(--ok)} .kpi.pendente .n{color:var(--warn)} .kpi.risco .n{color:var(--risk)}
+.hero{background:var(--risk-bg);border:1px solid color-mix(in srgb,var(--risk) 35%,transparent);border-radius:12px;padding:22px 24px;display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.hero.limpo{background:var(--ok-bg);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.hero h2{font-size:1.5rem;color:var(--risk)}
+.hero.limpo h2{color:var(--ok)}
+.hero p{margin-top:6px;max-width:60ch}
+.bar{display:flex;height:16px;border-radius:99px;overflow:hidden;background:var(--line);margin:14px 0}
+.bar i{display:block;height:100%}
+.c-ok{background:var(--ok)} .c-warn{background:var(--warn)} .c-risk{background:var(--risk)}
+.legend{display:grid;gap:8px}
+.legend div{display:flex;justify-content:space-between;gap:12px;font-size:.92rem}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;background:var(--c)}
+.hbar{display:grid;grid-template-columns:54px 1fr 32px;gap:10px;align-items:center;margin:10px 0;font-size:.92rem}
+.hbar .t{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.hbar .t i{display:block;height:100%;background:var(--primary);border-radius:99px}
+.list{display:grid}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);text-decoration:none;color:inherit}
+.row:first-child{border-top:0}
+.row:hover .rt{text-decoration:underline}
+.row .rs{color:var(--muted);font-size:.86rem}
+.muted{color:var(--muted)}
+.mono{font-variant-numeric:tabular-nums}
+
+/* table */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.toolbar .input{flex:1 1 220px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:.82rem;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr.click{cursor:pointer}
+.tbl tr.click:hover td{background:color-mix(in srgb,var(--primary) 6%,transparent)}
+.tbl .num{text-align:right}
+.tbl a.nota{font-weight:600;color:var(--ink);text-decoration:none}
+.tbl a.nota:hover{text-decoration:underline}
+.empty{padding:40px 12px;text-align:center;color:var(--muted)}
+.wrap{overflow-x:auto}
+
+/* nota detail */
+.crumb{display:inline-block;margin-bottom:14px;text-decoration:none;font-weight:600}
+.doc{position:relative;overflow:hidden}
+.doc-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;padding-bottom:16px;border-bottom:2px dashed var(--line);margin-bottom:16px}
+.doc-head .tipo{color:var(--muted);font-size:.9rem}
+.doc-head h1{font-size:1.7rem}
+.stamp{display:inline-block;padding:.3rem .9rem;border:3px solid currentColor;border-radius:6px;font-family:var(--font-head);font-weight:700;font-size:1.25rem;letter-spacing:.08em;text-transform:uppercase;transform:rotate(-5deg);box-shadow:inset 0 0 0 2px var(--surface),inset 0 0 0 3.5px currentColor;opacity:.92;white-space:nowrap}
+.stamp.quitada{color:var(--ok)} .stamp.pendente{color:var(--warn)} .stamp.risco{color:var(--risk)}
+dl.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;margin:0}
+dl.fields dt{color:var(--muted);font-size:.82rem}
+dl.fields dd{margin:2px 0 0;font-weight:500;overflow-wrap:anywhere}
+dl.fields .wide{grid-column:1/-1}
+.callout{border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.callout.quitada{background:var(--ok-bg);color:var(--ok)}
+.callout.pendente{background:var(--warn-bg);color:var(--warn)}
+.callout.risco{background:var(--risk-bg);color:var(--risk)}
+.callout strong{display:block;font-family:var(--font-head);font-size:1.1rem;margin-bottom:2px}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.hist li{display:grid;grid-template-columns:92px 1fr;gap:10px;font-size:.92rem}
+.hist time{color:var(--muted)}
+
+/* import */
+.drop{display:block;border:2px dashed var(--line);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;background:var(--surface)}
+.drop:hover,.drop.over{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 6%,var(--surface))}
+.drop strong{display:block;font-family:var(--font-head);font-size:1.15rem;margin-bottom:4px}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.drop:focus-within{outline:3px solid var(--primary);outline-offset:2px}
+.log{display:grid;gap:8px;margin-top:16px}
+.log div{border-radius:8px;padding:10px 14px;font-size:.92rem}
+.log .ok{background:var(--ok-bg);color:var(--ok)}
+.log .erro{background:var(--risk-bg);color:var(--risk)}
+.log .dup{background:var(--warn-bg);color:var(--warn)}
+
+/* alertas */
+.alerta{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;padding:16px 0;border-top:1px solid var(--line)}
+.alerta:first-child{border-top:0}
+.alerta.nao-lido{box-shadow:inset 3px 0 0 var(--risk);padding-left:14px}
+.alerta .txt{flex:1 1 320px}
+.alerta .txt b{display:block}
+.alerta .acoes{display:flex;gap:8px}
+
+/* planos */
+.plano{display:flex;flex-direction:column;gap:12px}
+.plano.dest{border:2px solid var(--primary)}
+.plano .preco{font-family:var(--font-head);font-size:2rem;font-weight:700}
+.plano .preco small{font-family:var(--font-body);font-size:.9rem;font-weight:400;color:var(--muted)}
+.plano ul{margin:0;padding-left:18px;display:grid;gap:6px;flex:1}
+
+/* login */
+.login{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh}
+.login-brand{background:var(--side);color:#fff;padding:48px 44px;display:flex;flex-direction:column;justify-content:space-between;gap:32px;position:relative;overflow:hidden}
+.login-brand h1{font-size:2.3rem;max-width:18ch;color:#fff}
+.login-brand p{color:var(--side-ink);max-width:44ch;margin-top:14px}
+.login-brand .stamps{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.login-brand .stamp{font-size:1rem}
+.login-brand .stamp.quitada{color:#4ADE9F;box-shadow:inset 0 0 0 2px var(--side),inset 0 0 0 3.5px currentColor}
+.login-brand .stamp.risco{color:#FF8A7E;transform:rotate(4deg);box-shadow:inset 0 0 0 2px var(--side),inset 0 0 0 3.5px currentColor}
+.login-form{display:grid;place-items:center;padding:32px}
+.login-form .box{width:100%;max-width:400px}
+.tabs{display:flex;gap:4px;background:var(--line);border-radius:10px;padding:4px;margin:18px 0}
+.tabs button{flex:1;border:0;background:none;padding:8px;border-radius:7px;cursor:pointer;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
+.field{display:grid;gap:5px;margin-bottom:14px}
+.field label{font-weight:600;font-size:.9rem}
+.err{color:var(--risk);font-size:.88rem;min-height:1.2em;margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:min(92vw,460px);z-index:50;font-weight:500}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:1fr}}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{padding:14px 12px 10px;gap:10px;flex-direction:column}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+  .nav a{white-space:nowrap;gap:8px}
+  .side-foot{display:none}
+  .main{padding:18px 14px 48px}
+  .g2,.detail{grid-template-columns:1fr}
+  h1{font-size:1.6rem}
+  .login{grid-template-columns:1fr}
+  .login-brand{padding:28px 22px}
+  .login-brand h1{font-size:1.7rem}
+}
+@media (max-width:720px){
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;padding:6px 4px}
+  .tbl td{border:0;display:flex;justify-content:space-between;gap:12px;padding:6px 10px;text-align:right}
+  .tbl td::before{content:attr(data-label);color:var(--muted);font-size:.82rem;text-align:left}
+  dl.fields{grid-template-columns:1fr}
+  .g4{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast-area" aria-live="polite"></div>
+
+<script>
+/* ============ dados fictícios ============ */
+const EMPRESAS = [
+  {id:'aurora', nome:'Distribuidora Aurora Ltda', seed:11, dist:[14,6,6], tipos:['NFe','NFe','NFe','NFSe','CTe'],
+   forn:['Plásticos Beta Indústria','Embalagens Norte','Agro Campo Fértil','Químicos União','Papelaria Central Atacado','Vidraria Santa Luzia','Alimentos Serra Verde','Tintas Colorado','Ferragens Vale do Sol','Grãos Planalto']},
+  {id:'rota', nome:'Transportes Rota Sul S.A.', seed:27, dist:[12,7,7], tipos:['CTe','CTe','NFe','NFSe','CTe'],
+   forn:['Posto Estrela do Sul','Pneus Horizonte','Oficina Diesel Forte','Seguros Caminho Seguro','Lubrificantes Meridional','Peças Rodovia','Rastreamento Via Sat','Terminal Porto Norte','Combustíveis Aliança','Lonas e Cargas Brasil']},
+  {id:'vale', nome:'Metalúrgica Vale Verde Ltda', seed:43, dist:[15,5,6], tipos:['NFe','NFe','NFe','NFe','NFSe'],
+   forn:['Aço Brasileiro Siderúrgica','Usinagem Precisão','Fundição Santa Rita','Parafusos e Fixadores Sul','Energia Mais Comercial','Manutenção Industrial Gama','Gases Industriais Ártico','Embalagens Metálicas Delta','Soldas Titan','Logística Vale Express']}
+];
+const PLANOS = [
+  {id:'essencial', nome:'Essencial', preco:'R$ 199', vol:'Até 500 notas por mês', itens:['1 empresa','Alertas na plataforma','Relatório de créditos']},
+  {id:'profissional', nome:'Profissional', preco:'R$ 590', vol:'Até 5.000 notas por mês', itens:['Até 3 empresas','Alertas por e-mail','Relatório de créditos exportável'], dest:true},
+  {id:'escritorio', nome:'Escritório', preco:'R$ 1.490', vol:'Até 20.000 notas por mês', itens:['Empresas ilimitadas','Visão multiempresa','Suporte tributário prioritário']}
+];
+const ROTULO = {quitada:'Quitada', pendente:'Pendente', risco:'Em risco'};
+const DIA = 86400000;
+
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const brl = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const dataBR = d => d.toLocaleDateString('pt-BR');
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hoje = (()=>{const d=new Date();d.setHours(12,0,0,0);return d})();
+const somaDias = (d,n) => new Date(Math.min(d.getTime()+n*DIA, hoje.getTime()));
+const hashStr = s => {let h=7;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h};
+
+let nextId = 1;
+function gerar(emp){
+  const r = rng(emp.seed);
+  const sts = [];
+  emp.dist.forEach((n,i)=>{for(let k=0;k<n;k++)sts.push(['quitada','pendente','risco'][i])});
+  for(let i=sts.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[sts[i],sts[j]]=[sts[j],sts[i]]}
+  const cnpj = () => {const d=Array.from({length:14},()=>Math.floor(r()*10)).join('');return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`};
+  const forns = emp.forn.map(n=>({nome:n,cnpj:cnpj()}));
+  const notas = sts.map(st=>{
+    const dias = st==='pendente' ? Math.floor(r()*14) : st==='risco' ? 6+Math.floor(r()*74) : Math.floor(r()*85);
+    const emissao = new Date(hoje.getTime()-dias*DIA);
+    const tipo = emp.tipos[Math.floor(r()*emp.tipos.length)];
+    const f = forns[Math.floor(r()*forns.length)];
+    const valor = Math.round((1500+r()*48000)*100)/100;
+    const chave = tipo==='NFSe'
+      ? Array.from({length:8},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(r()*32)]).join('')
+      : Array.from({length:44},()=>Math.floor(r()*10)).join('').replace(/(\d{4})(?=\d)/g,'$1 ');
+    return {tipo, numero:1000+Math.floor(r()*8999), fornecedor:f.nome, cnpj:f.cnpj, emissao, valor, credito:Math.round(valor*0.12*100)/100, chave, status:st};
+  });
+  notas.sort((a,b)=>b.emissao-a.emissao);
+  notas.forEach(n=>{
+    n.id = nextId++;
+    n.hist = [[somaDias(n.emissao,1),'Nota importada para a plataforma.']];
+    if(n.status==='quitada') n.hist.push([somaDias(n.emissao,2),'Consulta de débitos concluída: pagamento do fornecedor confirmado.']);
+    if(n.status==='pendente') n.hist.push([somaDias(n.emissao,1),'Aguardando a consulta de débitos do fornecedor.']);
+    if(n.status==='risco'){
+      n.hist.push([somaDias(n.emissao,3),'Consulta de débitos concluída: débito em aberto do fornecedor.']);
+      n.hist.push([somaDias(n.emissao,3),'Alerta de inadimplência gerado.']);
+    }
+  });
+  const alertas = notas.filter(n=>n.status==='risco').map((n,i)=>({id:'al'+n.id,notaId:n.id,data:somaDias(n.emissao,3),lido:i>=4}));
+  return {notas, alertas};
+}
+
+const state = {
+  logado:false, tab:'entrar', usuario:{nome:'Marina Costa',papel:'Gestora fiscal'},
+  empresaId:'aurora', dados:{}, importados:new Set(), log:[], interesses:{}, destino:'painel',
+  filtros:{q:'',status:'todos',tipo:'todos',periodo:'todos'}
+};
+EMPRESAS.forEach(e=>{state.dados[e.id]=gerar(e)});
+const empresa = () => EMPRESAS.find(e=>e.id===state.empresaId);
+const dados = () => state.dados[state.empresaId];
+function achaNota(id){
+  for(const e of EMPRESAS){const n=state.dados[e.id].notas.find(x=>x.id===+id);if(n)return {nota:n,empresa:e}}
+  return null;
+}
+const naoLidos = () => dados().alertas.filter(a=>!a.lido).length;
+function agrupa(notas){
+  const g={quitada:{n:0,valor:0,credito:0},pendente:{n:0,valor:0,credito:0},risco:{n:0,valor:0,credito:0}};
+  notas.forEach(n=>{const x=g[n.status];x.n++;x.valor+=n.valor;x.credito+=n.credito});
+  return g;
+}
+
+/* ============ views ============ */
+function viewLogin(){
+  const cad = state.tab==='cadastro';
+  return `<main class="login">
+    <section class="login-brand">
+      <div class="logo">FiscalHub<small>Monitor Fiscal Inteligente</small></div>
+      <div>
+        <h1>Saiba quais créditos você pode aproveitar antes de fechar o mês.</h1>
+        <p>O FiscalHub confere as suas notas fiscais e avisa quando um fornecedor deixou débitos em aberto.</p>
+      </div>
+      <div class="stamps" aria-hidden="true"><span class="stamp quitada">Quitada</span><span class="stamp risco">Em risco</span></div>
+    </section>
+    <section class="login-form"><div class="box">
+      <h2>${cad?'Criar conta':'Entrar no FiscalHub'}</h2>
+      <p class="muted" style="margin-top:6px">Protótipo navegável: qualquer e-mail e senha funcionam.</p>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="${!cad}" data-act="tab" data-tab="entrar">Entrar</button>
+        <button role="tab" aria-selected="${cad}" data-act="tab" data-tab="cadastro">Criar conta</button>
+      </div>
+      <form id="form-login" novalidate>
+        ${cad?`<div class="field"><label for="nome">Seu nome</label><input class="input" id="nome" name="nome" autocomplete="name"></div>
+        <div class="field"><label for="org">Empresa ou escritório</label><input class="input" id="org" name="org"></div>
+        <div class="field"><label for="perfil">Você é</label><select id="perfil" name="perfil"><option>Gestor fiscal de empresa</option><option>Contador de escritório</option></select></div>`:''}
+        <div class="field"><label for="email">E-mail</label><input class="input" id="email" name="email" type="email" autocomplete="email" placeholder="voce@empresa.com.br"></div>
+        <div class="field"><label for="senha">Senha</label><input class="input" id="senha" name="senha" type="password" autocomplete="current-password"></div>
+        <div class="err" id="login-erro" role="alert"></div>
+        <button class="btn primary" style="width:100%" type="submit">${cad?'Criar conta e entrar':'Entrar'}</button>
+      </form>
+      <button class="btn" style="width:100%;margin-top:10px" data-act="demo">Entrar com conta de demonstração</button>
+    </div></section>
+  </main>`;
+}
+
+function shell(rota, conteudo){
+  const nav = [['painel','Painel'],['notas','Notas fiscais'],['importar','Importar notas'],['alertas','Alertas'],['creditos','Relatório de créditos'],['planos','Planos']];
+  const nl = naoLidos();
+  const ativa = rota.startsWith('nota-') ? 'notas' : rota;
+  return `<div class="app">
+    <aside class="side">
+      <div class="logo">FiscalHub<small>Monitor Fiscal Inteligente</small></div>
+      <nav class="nav" aria-label="Principal">
+        ${nav.map(([id,t])=>`<a href="#${id}" ${ativa===id?'aria-current="page"':''}>${t}${id==='alertas'&&nl?`<span class="badge" aria-label="${nl} alertas não lidos">${nl}</span>`:''}</a>`).join('')}
+      </nav>
+      <div class="side-foot"><span>Protótipo com dados fictícios. A consulta de débitos é simulada.</span><button data-act="sair">Sair</button></div>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <div class="empresa"><label for="empresa">Empresa</label>
+          <select id="empresa">${EMPRESAS.map(e=>`<option value="${e.id}" ${e.id===state.empresaId?'selected':''}>${e.nome}</option>`).join('')}</select></div>
+        <div class="who"><span>${esc(state.usuario.nome)}<br><small>${esc(state.usuario.papel)}</small></span><span class="avatar" aria-hidden="true">${esc(state.usuario.nome[0]||'U').toUpperCase()}</span></div>
+      </div>
+      ${conteudo}
+    </main>
+  </div>`;
+}
+
+function viewPainel(){
+  const {notas} = dados(); const g = agrupa(notas); const r = g.risco;
+  const totalCred = notas.reduce((s,n)=>s+n.credito,0)||1;
+  const pct = k => (g[k].credito/totalCred*100).toFixed(1);
+  const tipos = ['NFe','NFSe','CTe'].map(t=>[t,notas.filter(n=>n.tipo===t).length]);
+  const risco = notas.filter(n=>n.status==='risco').slice(0,5);
+  return `<div class="page-head"><div><h1>Painel de conformidade</h1><p>${esc(empresa().nome)}. Situação das notas fiscais dos últimos 90 dias.</p></div></div>
+  ${r.n?`<section class="hero"><div><h2>${r.n} ${r.n===1?'nota com débito em aberto':'notas com débito em aberto'}</h2>
+    <p>${brl(r.credito)} em créditos tributários não devem ser aproveitados até que os fornecedores regularizem os débitos.</p></div>
+    <button class="btn primary" data-act="filtrar" data-status="risco">Ver notas em risco</button></section>`
+  :`<section class="hero limpo"><div><h2>Nenhuma nota em risco</h2><p>Todos os fornecedores verificados estão em dia.</p></div></section>`}
+  <div class="grid g4" style="margin:16px 0">
+    <button class="kpi" data-act="filtrar" data-status="todos"><span class="l">Total de notas</span><span class="n">${notas.length}</span><span class="v">${brl(notas.reduce((s,n)=>s+n.valor,0))}</span></button>
+    <button class="kpi quitada" data-act="filtrar" data-status="quitada"><span class="l">Quitadas</span><span class="n">${g.quitada.n}</span><span class="v">${brl(g.quitada.credito)} em crédito</span></button>
+    <button class="kpi pendente" data-act="filtrar" data-status="pendente"><span class="l">Pendentes</span><span class="n">${g.pendente.n}</span><span class="v">${brl(g.pendente.credito)} a verificar</span></button>
+    <button class="kpi risco" data-act="filtrar" data-status="risco"><span class="l">Em risco</span><span class="n">${g.risco.n}</span><span class="v">${brl(g.risco.credito)} retidos</span></button>
+  </div>
+  <div class="grid g2">
+    <section class="card"><h2>Crédito tributário por situação</h2>
+      <div class="bar" role="img" aria-label="Distribuição do crédito: ${pct('quitada')}% quitado, ${pct('pendente')}% pendente, ${pct('risco')}% em risco">
+        <i class="c-ok" style="width:${pct('quitada')}%"></i><i class="c-warn" style="width:${pct('pendente')}%"></i><i class="c-risk" style="width:${pct('risco')}%"></i></div>
+      <div class="legend">
+        <div><span style="--c:var(--ok)">Aproveitável (quitadas)</span><b class="mono">${brl(g.quitada.credito)}</b></div>
+        <div><span style="--c:var(--warn)">A verificar (pendentes)</span><b class="mono">${brl(g.pendente.credito)}</b></div>
+        <div><span style="--c:var(--risk)">Não aproveitar (em risco)</span><b class="mono">${brl(g.risco.credito)}</b></div>
+      </div></section>
+    <section class="card"><h2>Notas por tipo</h2><div style="margin-top:8px">
+      ${tipos.map(([t,n])=>`<div class="hbar"><span>${t}</span><span class="t"><i style="width:${notas.length?n/notas.length*100:0}%"></i></span><b class="mono">${n}</b></div>`).join('')}
+    </div></section>
+  </div>
+  <section class="card" style="margin-top:16px"><h2 style="margin-bottom:6px">Notas em risco mais recentes</h2>
+    <div class="list">${risco.length?risco.map(n=>`<a class="row" href="#nota-${n.id}"><div><div class="rt"><b>${n.tipo} nº ${n.numero}</b> · ${esc(n.fornecedor)}</div><div class="rs">Emitida em ${dataBR(n.emissao)}</div></div><div style="text-align:right"><b class="mono">${brl(n.valor)}</b><div class="rs">crédito ${brl(n.credito)}</div></div></a>`).join(''):'<p class="muted" style="padding:12px 0">Nenhuma nota em risco.</p>'}</div></section>`;
+}
+
+function filtrarNotas(){
+  const f = state.filtros; const q = f.q.trim().toLowerCase();
+  return dados().notas.filter(n=>{
+    if(f.status!=='todos' && n.status!==f.status) return false;
+    if(f.tipo!=='todos' && n.tipo!==f.tipo) return false;
+    if(f.periodo!=='todos' && (hoje-n.emissao)/DIA > +f.periodo) return false;
+    if(q && !(n.fornecedor.toLowerCase().includes(q) || String(n.numero).includes(q))) return false;
+    return true;
+  });
+}
+function tabelaNotas(){
+  const lista = filtrarNotas();
+  if(!lista.length) return `<div class="empty">Nenhuma nota encontrada com esses filtros.<br><button class="btn sm" style="margin-top:12px" data-act="limpar">Limpar filtros</button></div>`;
+  return `<p class="muted" style="margin-bottom:8px" aria-live="polite">${lista.length} ${lista.length===1?'nota':'notas'}</p>
+  <div class="wrap"><table class="tbl"><thead><tr><th>Nota</th><th>Fornecedor</th><th>Emissão</th><th class="num">Valor</th><th class="num">Crédito estimado</th><th>Situação</th></tr></thead><tbody>
+  ${lista.map(n=>`<tr class="click" data-href="nota-${n.id}">
+    <td data-label="Nota"><a class="nota" href="#nota-${n.id}">${n.tipo} nº ${n.numero}</a></td>
+    <td data-label="Fornecedor">${esc(n.fornecedor)}</td>
+    <td data-label="Emissão" class="mono">${dataBR(n.emissao)}</td>
+    <td data-label="Valor" class="num mono">${brl(n.valor)}</td>
+    <td data-label="Crédito estimado" class="num mono">${brl(n.credito)}</td>
+    <td data-label="Situação"><span class="pill ${n.status}">${ROTULO[n.status]}</span></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+function viewNotas(){
+  const f = state.filtros;
+  const opt = (v,t,cur)=>`<option value="${v}" ${cur===v?'selected':''}>${t}</option>`;
+  return `<div class="page-head"><div><h1>Notas fiscais</h1><p>Encontre uma nota e veja se o fornecedor quitou os débitos vinculados a ela.</p></div></div>
+  <section class="card"><div class="toolbar">
+    <input class="input" id="f-q" type="search" placeholder="Buscar por fornecedor ou número" value="${esc(f.q)}" aria-label="Buscar por fornecedor ou número">
+    <select id="f-status" aria-label="Situação">${opt('todos','Todas as situações',f.status)}${opt('quitada','Quitadas',f.status)}${opt('pendente','Pendentes',f.status)}${opt('risco','Em risco',f.status)}</select>
+    <select id="f-tipo" aria-label="Tipo">${opt('todos','Todos os tipos',f.tipo)}${opt('NFe','NFe',f.tipo)}${opt('NFSe','NFSe',f.tipo)}${opt('CTe','CTe',f.tipo)}</select>
+    <select id="f-periodo" aria-label="Período">${opt('todos','Todo o período',f.periodo)}${opt('30','Últimos 30 dias',f.periodo)}${opt('60','Últimos 60 dias',f.periodo)}${opt('90','Últimos 90 dias',f.periodo)}</select>
+    <button class="btn" data-act="limpar">Limpar filtros</button>
+  </div><div id="resultado">${tabelaNotas()}</div></section>`;
+}
+
+function viewNota(id){
+  const x = achaNota(id);
+  if(!x) return `<div class="empty">Nota não encontrada. <a href="#notas">Voltar para as notas</a></div>`;
+  const n = x.nota;
+  const rotuloChave = n.tipo==='NFSe' ? 'Código de verificação' : 'Chave de acesso';
+  const painel = n.status==='quitada'
+    ? `<div class="callout quitada"><strong>Crédito tributário aproveitável</strong>${brl(n.credito)} podem ser aproveitados nesta nota.</div>`
+    : n.status==='risco'
+    ? `<div class="callout risco"><strong>Não aproveite este crédito</strong>O fornecedor tem débito em aberto vinculado a esta nota.</div>`
+    : `<div class="callout pendente"><strong>Verifique antes de aproveitar</strong>Esta nota ainda não passou pela consulta de débitos.</div>`;
+  return `<a class="crumb" href="#notas">← Notas fiscais</a>
+  <div class="grid detail">
+    <section class="card doc">
+      <div class="doc-head"><div><div class="tipo">${n.tipo}</div><h1>Nota nº ${n.numero}</h1></div><span class="stamp ${n.status}">${ROTULO[n.status]}</span></div>
+      <dl class="fields">
+        <div><dt>Fornecedor</dt><dd>${esc(n.fornecedor)}</dd></div>
+        <div><dt>CNPJ (fictício)</dt><dd class="mono">${n.cnpj}</dd></div>
+        <div><dt>Emissão</dt><dd>${dataBR(n.emissao)}</dd></div>
+        <div><dt>Empresa</dt><dd>${esc(x.empresa.nome)}</dd></div>
+        <div><dt>Valor da nota</dt><dd class="mono">${brl(n.valor)}</dd></div>
+        <div><dt>Crédito tributário estimado</dt><dd class="mono">${brl(n.credito)}</dd></div>
+        <div class="wide"><dt>${rotuloChave}</dt><dd class="mono">${n.chave}</dd></div>
+      </dl>
+    </section>
+    <section class="card">
+      <h2 style="margin-bottom:12px">Posso aproveitar o crédito?</h2>
+      ${painel}
+      <button class="btn primary" style="width:100%" data-act="verificar" data-id="${n.id}" ${n.verificando?'disabled':''}>${n.verificando?'Consultando débitos…':(n.status==='pendente'?'Verificar débitos agora':'Verificar novamente')}</button>
+    </section>
+  </div>
+  <section class="card" style="margin-top:16px"><h2 style="margin-bottom:14px">Histórico de verificação</h2>
+    <ul class="hist">${n.hist.slice().reverse().map(([d,t])=>`<li><time>${dataBR(d)}</time><span>${t}</span></li>`).join('')}</ul></section>`;
+}
+
+function viewImportar(){
+  return `<div class="page-head"><div><h1>Importar notas</h1><p>Envie os arquivos XML das suas notas (NFe, NFSe e CTe). Neste protótipo a importação é simulada.</p></div></div>
+  <label class="drop" id="drop"><input type="file" id="arquivos" multiple accept=".xml,text/xml,application/xml">
+    <strong>Arraste os arquivos XML aqui</strong><span class="muted">ou clique para escolher no computador</span></label>
+  <div style="margin-top:12px"><button class="btn" data-act="exemplos">Usar 3 arquivos de exemplo</button></div>
+  <div class="log" aria-live="polite">${state.log.map(l=>`<div class="${l.t}">${l.m}</div>`).join('')}</div>
+  ${state.log.some(l=>l.t==='ok')?`<p style="margin-top:16px"><a class="btn primary" href="#notas">Ver as notas importadas</a></p>`:''}`;
+}
+function processarArquivos(arqs){
+  state.log = []; let ok = 0;
+  arqs.forEach(({name})=>{
+    const chaveDup = state.empresaId+'|'+name.toLowerCase();
+    if(!/\.xml$/i.test(name)) state.log.push({t:'erro',m:`<b>${esc(name)}</b> não é um XML fiscal. Envie arquivos .xml de NFe, NFSe ou CTe.`});
+    else if(state.importados.has(chaveDup)) state.log.push({t:'dup',m:`<b>${esc(name)}</b> já foi importado e não será duplicado.`});
+    else {
+      state.importados.add(chaveDup);
+      const e = empresa(); const h = hashStr(name);
+      const tipo = /cte/i.test(name)?'CTe':/nfse/i.test(name)?'NFSe':'NFe';
+      const valor = Math.round((2000+(h%40000))*100)/100;
+      const n = {id:nextId++,tipo,numero:2000+(h%7999),fornecedor:e.forn[h%e.forn.length],cnpj:'—',emissao:new Date(hoje),valor,credito:Math.round(valor*0.12*100)/100,
+        chave: tipo==='NFSe'?'IMPORTADA':'0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000',status:'pendente',hist:[[new Date(hoje),`Nota importada do arquivo ${esc(name)}.`],[new Date(hoje),'Aguardando a consulta de débitos do fornecedor.']]};
+      n.cnpj = '00.000.000/0001-00';
+      dados().notas.unshift(n); ok++;
+      state.log.push({t:'ok',m:`<b>${esc(name)}</b> importado como ${tipo} nº ${n.numero} (Pendente).`});
+    }
+  });
+  if(ok) toast(`${ok} ${ok===1?'nota importada':'notas importadas'} com sucesso.`);
+  render();
+}
+
+function viewAlertas(){
+  const al = dados().alertas.slice().sort((a,b)=>b.data-a.data);
+  const nl = naoLidos();
+  return `<div class="page-head"><div><h1>Alertas de inadimplência</h1><p>Avisos de fornecedores com débitos em aberto vinculados às suas notas.</p></div>
+    ${nl?`<button class="btn" data-act="todos-lidos">Marcar todos como lidos</button>`:''}</div>
+  <section class="card">${al.length?al.map(a=>{const x=achaNota(a.notaId);const n=x.nota;return `<div class="alerta ${a.lido?'':'nao-lido'}">
+    <div class="txt"><b>${esc(n.fornecedor)} tem débito em aberto</b><span class="muted">Vinculado à nota ${n.tipo} nº ${n.numero}, de ${brl(n.valor)}. Alerta de ${dataBR(a.data)}.</span></div>
+    <div class="acoes"><a class="btn sm" href="#nota-${n.id}">Ver nota</a>${a.lido?'':`<button class="btn sm" data-act="lido" data-id="${a.id}">Marcar como lido</button>`}</div></div>`}).join(''):`<div class="empty">Nenhum alerta por enquanto.</div>`}</section>`;
+}
+
+function viewCreditos(){
+  const {notas} = dados(); const g = agrupa(notas);
+  const q = notas.filter(n=>n.status==='quitada');
+  return `<div class="page-head"><div><h1>Relatório de créditos</h1><p>Créditos tributários das notas quitadas, prontos para o fechamento do mês.</p></div>
+    <div style="display:flex;gap:8px"><button class="btn" data-act="exportar" data-fmt="PDF">Exportar PDF</button><button class="btn" data-act="exportar" data-fmt="Excel">Exportar Excel</button></div></div>
+  <div class="grid g3" style="margin-bottom:16px">
+    <div class="card"><div class="muted">Crédito aproveitável</div><div class="kpi quitada" style="border:0;padding:4px 0;cursor:default"><span class="n" style="font-size:1.8rem">${brl(g.quitada.credito)}</span></div></div>
+    <div class="card"><div class="muted">Aguardando verificação</div><div class="kpi pendente" style="border:0;padding:4px 0;cursor:default"><span class="n" style="font-size:1.8rem">${brl(g.pendente.credito)}</span></div></div>
+    <div class="card"><div class="muted">Retido por débito do fornecedor</div><div class="kpi risco" style="border:0;padding:4px 0;cursor:default"><span class="n" style="font-size:1.8rem">${brl(g.risco.credito)}</span></div></div>
+  </div>
+  <section class="card"><h2 style="margin-bottom:10px">Notas quitadas (${q.length})</h2>
+    <div class="wrap"><table class="tbl"><thead><tr><th>Nota</th><th>Fornecedor</th><th>Emissão</th><th class="num">Valor</th><th class="num">Crédito aproveitável</th></tr></thead><tbody>
+    ${q.map(n=>`<tr class="click" data-href="nota-${n.id}"><td data-label="Nota"><a class="nota" href="#nota-${n.id}">${n.tipo} nº ${n.numero}</a></td><td data-label="Fornecedor">${esc(n.fornecedor)}</td><td data-label="Emissão" class="mono">${dataBR(n.emissao)}</td><td data-label="Valor" class="num mono">${brl(n.valor)}</td><td data-label="Crédito aproveitável" class="num mono">${brl(n.credito)}</td></tr>`).join('')}
+    <tr><td data-label="Total" colspan="4"><b>Total</b></td><td data-label="Crédito" class="num mono"><b>${brl(g.quitada.credito)}</b></td></tr>
+    </tbody></table></div></section>`;
+}
+
+function viewPlanos(){
+  const total = Object.values(state.interesses).filter(Boolean).length;
+  return `<div class="page-head"><div><h1>Planos</h1><p>Escolha pelo volume de notas processadas por mês. Valores fictícios para validar a disposição de pagar.</p></div>
+    ${total?`<span class="pill quitada">${total} ${total===1?'interesse registrado':'interesses registrados'}</span>`:''}</div>
+  <div class="grid g3">${PLANOS.map(p=>`<section class="card plano ${p.dest?'dest':''}"><h2>${p.nome}</h2>
+    <div class="preco">${p.preco}<small> por mês</small></div><div><b>${p.vol}</b></div>
+    <ul>${p.itens.map(i=>`<li>${i}</li>`).join('')}</ul>
+    <button class="btn ${p.dest?'primary':''}" data-act="interesse" data-plano="${p.id}" ${state.interesses[p.id]?'disabled':''}>${state.interesses[p.id]?'Interesse registrado':'Tenho interesse'}</button></section>`).join('')}</div>`;
+}
+
+/* ============ render / rotas ============ */
+const $app = document.getElementById('app');
+let ultimaRota = null;
+const rotaAtual = () => (location.hash||'').slice(1) || 'painel';
+
+function render(){
+  const rota = rotaAtual();
+  document.title = 'FiscalHub — Monitor Fiscal Inteligente (protótipo)';
+  if(!state.logado){ state.destino = rota; $app.innerHTML = viewLogin(); ultimaRota = null; return; }
+  let html;
+  if(rota.startsWith('nota-')){
+    const x = achaNota(rota.slice(5));
+    if(x && x.empresa.id!==state.empresaId) state.empresaId = x.empresa.id;
+    html = viewNota(rota.slice(5));
+  }
+  else if(rota==='notas') html = viewNotas();
+  else if(rota==='importar') html = viewImportar();
+  else if(rota==='alertas') html = viewAlertas();
+  else if(rota==='creditos') html = viewCreditos();
+  else if(rota==='planos') html = viewPlanos();
+  else html = viewPainel();
+  $app.innerHTML = shell(rota, html);
+  if(rota!==ultimaRota){ window.scrollTo(0,0); ultimaRota = rota; }
+  if(rota==='importar') ligarImportacao();
+}
+function ir(r){ if(rotaAtual()===r && location.hash) render(); else location.hash = r; }
+window.addEventListener('hashchange', render);
+
+function toast(msg){
+  const area = document.getElementById('toast-area');
+  area.innerHTML = `<div class="toast" role="status">${msg}</div>`;
+  clearTimeout(toast.t); toast.t = setTimeout(()=>{area.innerHTML=''},3200);
+}
+
+function entrar(nome, papel){
+  state.logado = true;
+  state.usuario = {nome, papel};
+  const dest = state.destino || 'painel';
+  if(rotaAtual()===dest){ render(); } else location.hash = dest;
+}
+
+function verificar(id){
+  const x = achaNota(id); if(!x || x.nota.verificando) return;
+  const n = x.nota; n.verificando = true; render();
+  setTimeout(()=>{
+    n.verificando = false; const agora = new Date();
+    if(n.status==='pendente'){
+      if(n.id%3===0){
+        n.status='risco';
+        n.hist.push([agora,'Consulta de débitos concluída: débito em aberto do fornecedor.'],[agora,'Alerta de inadimplência gerado.']);
+        state.dados[x.empresa.id].alertas.unshift({id:'al'+n.id,notaId:n.id,data:agora,lido:false});
+        toast(`Atenção: a nota ${n.tipo} nº ${n.numero} passou para Em risco.`);
+      } else {
+        n.status='quitada';
+        n.hist.push([agora,'Consulta de débitos concluída: pagamento do fornecedor confirmado.']);
+        toast('Nota quitada. O crédito tributário pode ser aproveitado.');
+      }
+    } else if(n.status==='risco'){
+      n.hist.push([agora,'Nova consulta: o débito do fornecedor continua em aberto.']); toast('O débito do fornecedor continua em aberto.');
+    } else {
+      n.hist.push([agora,'Nova consulta: o pagamento do fornecedor continua confirmado.']); toast('Pagamento do fornecedor confirmado.');
+    }
+    render();
+  },900);
+}
+
+function ligarImportacao(){
+  const drop = document.getElementById('drop'), input = document.getElementById('arquivos');
+  if(!drop||!input) return;
+  input.addEventListener('change',()=>{ if(input.files.length) processarArquivos(Array.from(input.files)); });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+  drop.addEventListener('drop',e=>{ const f = Array.from(e.dataTransfer.files||[]); if(f.length) processarArquivos(f); });
+}
+
+/* ============ eventos ============ */
+document.addEventListener('click',e=>{
+  const a = e.target.closest('[data-act]');
+  if(a){
+    const act = a.dataset.act;
+    if(act==='tab'){ state.tab=a.dataset.tab; render(); }
+    else if(act==='demo'){ entrar('Marina Costa','Gestora fiscal'); }
+    else if(act==='sair'){ state.logado=false; state.destino='painel'; location.hash=''; render(); }
+    else if(act==='filtrar'){ state.filtros={q:'',status:a.dataset.status,tipo:'todos',periodo:'todos'}; ir('notas'); }
+    else if(act==='limpar'){ state.filtros={q:'',status:'todos',tipo:'todos',periodo:'todos'}; render(); }
+    else if(act==='verificar'){ verificar(a.dataset.id); }
+    else if(act==='exemplos'){ processarArquivos([{name:'nfe_exemplo_001.xml'},{name:'cte_exemplo_002.xml'},{name:'nfse_exemplo_003.xml'}]); }
+    else if(act==='lido'){ const al=dados().alertas.find(x=>x.id===a.dataset.id); if(al) al.lido=true; render(); }
+    else if(act==='todos-lidos'){ dados().alertas.forEach(x=>x.lido=true); render(); toast('Todos os alertas foram marcados como lidos.'); }
+    else if(act==='exportar'){ toast(`Exportação em ${a.dataset.fmt} simulada neste protótipo.`); }
+    else if(act==='interesse'){ const p=PLANOS.find(x=>x.id===a.dataset.plano); state.interesses[p.id]=true; render(); toast(`Obrigado! Registramos o seu interesse no plano ${p.nome}.`); }
+    return;
+  }
+  const tr = e.target.closest('tr[data-href]');
+  if(tr && !e.target.closest('a')) location.hash = tr.dataset.href;
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='f-q'){ state.filtros.q = e.target.value; document.getElementById('resultado').innerHTML = tabelaNotas(); }
+});
+document.addEventListener('change',e=>{
+  const id = e.target.id;
+  if(id==='empresa'){ state.empresaId = e.target.value; state.log=[]; if(rotaAtual().startsWith('nota-')) location.hash='notas'; else render(); }
+  else if(id==='f-status'||id==='f-tipo'||id==='f-periodo'){
+    state.filtros[id.slice(2)] = e.target.value; document.getElementById('resultado').innerHTML = tabelaNotas();
+  }
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='form-login') return;
+  e.preventDefault();
+  const f = new FormData(e.target); const email = String(f.get('email')||'').trim(); const senha = String(f.get('senha')||'');
+  const erro = document.getElementById('login-erro');
+  if(!/^\S+@\S+\.\S+$/.test(email)){ erro.textContent='Informe um e-mail válido, por exemplo voce@empresa.com.br.'; return; }
+  if(!senha){ erro.textContent='Informe a sua senha.'; return; }
+  const base = email.split('@')[0].replace(/[._-]+/g,' ');
+  const nome = String(f.get('nome')||'').trim() || base.replace(/\b\w/g,c=>c.toUpperCase());
+  entrar(nome, state.tab==='cadastro' ? String(f.get('perfil')||'Gestor fiscal') : 'Gestor fiscal');
+});
+
+render();
+</script>
+</body>
+</html>
